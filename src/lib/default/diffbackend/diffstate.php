@@ -183,6 +183,12 @@ class DiffState implements IChanges {
                     $changes[] = $change;
                 }
 
+                // @see https://jira.z-hub.io/browse/ZP-1561
+                if ((isset($item['star']) && isset($old_item['star'])) && ($item['star'] != $old_item['star'])) {
+                    $change["type"] = "change";
+                    $changes[] = $change;
+                }
+
                 // unset in $old, so $old contains only the deleted items
                 unset($old[$id]);
             }
