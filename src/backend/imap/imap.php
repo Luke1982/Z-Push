@@ -673,6 +673,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
     public function ChangesSink($timeout = 30) {
         $notifications = array();
         $stopat = time() + $timeout - 1;
+        $flaggedcount = 0;
 
         //We can get here and the ChangesSink not be initialized yet
         if (!$this->changessinkinit) {
@@ -699,11 +700,15 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             @imap_check($this->mbox);
 
             $status = @imap_status($this->mbox, $this->server . $imapid, SA_ALL);
+            for ($i = 1; $i <= @imap_num_msg($this->mbox); $i++) {
+                if (@imap_headerinfo($this->mbox, $i)->Flagged == 'F')
+                    $flaggedcount++;
+            }
             if (!$status) {
                 ZLog::Write(LOGLEVEL_WARN, sprintf("ChangesSink: could not stat folder '%s': %s ", $this->getFolderIdFromImapId($imapid), imap_last_error()));
             }
             else {
-                $newstate = "M:". $status->messages ."-R:". $status->recent ."-U:". $status->unseen;
+                $newstate = "M:". $status->messages ."-R:". $status->recent ."-U:". $status->unseen ."-F:". $flaggedcount;
 
                 if (! isset($this->sinkstates[$imapid]) ) {
                     $this->sinkstates[$imapid] = $newstate;
